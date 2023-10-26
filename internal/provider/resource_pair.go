@@ -12,11 +12,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-var _ resource.Resource = (*PairResource)(nil)
+var _ resource.ResourceWithModifyPlan = (*PairResource)(nil)
+
+type PlanOrState interface {
+	Set(context.Context, interface{}) diag.Diagnostics
+}
 
 func NewPairResource() resource.Resource {
 	return &PairResource{}
@@ -46,6 +49,39 @@ func (r *PairResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 
 func (r *PairResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_pair"
+}
+
+func (r *PairResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	// Will be when the resource is being deleted.
+	if req.Plan.Raw.IsNull() {
+		return
+	}
+
+	var model pairModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Read existing result field from state, if present.
+	existingResult := make(map[string]types.String)
+	if !req.State.Raw.IsNull() {
+		resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("result"), &existingResult)...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
+	convertedExistingResult := make(map[string]string, len(existingResult))
+	for key, value := range existingResult {
+		convertedExistingResult[key] = value.ValueString()
+	}
+
+	r.modify(ctx, model, convertedExistingResult, &resp.Diagnostics, &resp.Plan)
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
@@ -97,7 +133,11 @@ func (r *PairResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	// Read existing result field from state.
 	existingResult := make(map[string]types.String)
-	req.State.GetAttribute(ctx, path.Root("result"), &existingResult)
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("result"), &existingResult)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	convertedExistingResult := make(map[string]string, len(existingResult))
 	for key, value := range existingResult {
@@ -107,7 +147,7 @@ func (r *PairResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	r.modify(ctx, model, convertedExistingResult, &resp.Diagnostics, &resp.State)
 }
 
-func (r *PairResource) modify(ctx context.Context, model pairModel, existingResult map[string]string, diagnostics *diag.Diagnostics, state *tfsdk.State) {
+func (r *PairResource) modify(ctx context.Context, model pairModel, existingResult map[string]string, diagnostics *diag.Diagnostics, state PlanOrState) {
 	keys := make([]string, len(model.Keys.Elements()))
 	diagnostics.Append(model.Keys.ElementsAs(ctx, &keys, false)...)
 	if diagnostics.HasError() {
