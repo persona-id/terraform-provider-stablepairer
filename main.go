@@ -39,7 +39,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "registry.terraform.io/hashicorp/stablepairer",
+		Address: "registry.terraform.io/persona-id/stablepairer",
 		Debug:   debug,
 	}
 
