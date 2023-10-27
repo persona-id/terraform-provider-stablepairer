@@ -24,10 +24,10 @@ resource "stablepairer_pair" "example" {
 
 ### Required
 
-- `keys` (Set of String) The set of keys to assign a value.
+- `keys` (Set of String) The set of keys to assign a value. An unknown key that can be assigned a value (either known or unknown) will trigger the result to be unknown.
 - `values` (Set of String) The set of values to assing to keys.
 
 ### Read-Only
 
 - `id` (String) A static value used internally by Terraform, this should not be referenced in configurations.
-- `result` (Map of String) The stable mapping of keys to values, size will be the smaller of the size of keys and values.
+- `result` (Map of String) The stable mapping of keys to values, size will be the smaller of the size of keys and values. The value will generally be known at plan time unless an unknown key can be assigned a value in which the whole result will be unknown but the end result will still be stable.

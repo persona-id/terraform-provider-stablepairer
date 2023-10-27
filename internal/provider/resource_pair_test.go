@@ -10,7 +10,10 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
@@ -197,134 +200,454 @@ func TestAccResourcePairEmptyStart(t *testing.T) {
 
 func TestInternalPairStable(t *testing.T) {
 	var tests = []struct {
-		keys, values              []string
-		startingResult, endResult map[string]string
+		keys, values   []basetypes.StringValue
+		startingResult map[string]string
+		endResult      basetypes.MapValue
 	}{
+		// All Keys & Values Known
+		///////////////////////////////////////////////////////////////////////////
 		// empty start
 		{
-			keys:           []string{"a", "b", "c"},
-			values:         []string{"1", "2", "3", "4"},
-			startingResult: map[string]string{},
-			endResult: map[string]string{
-				"a": "1",
-				"b": "2",
-				"c": "3",
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
 			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringValue("3"),
+				basetypes.NewStringValue("4"),
+			},
+			startingResult: map[string]string{},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"a": basetypes.NewStringValue("1"),
+				"b": basetypes.NewStringValue("2"),
+				"c": basetypes.NewStringValue("3"),
+			}),
 		},
 		{
-			keys:           []string{"a", "b", "c"},
-			values:         []string{"1", "2"},
-			startingResult: map[string]string{},
-			endResult: map[string]string{
-				"a": "1",
-				"b": "2",
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
 			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+			},
+			startingResult: map[string]string{},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"a": basetypes.NewStringValue("1"),
+				"b": basetypes.NewStringValue("2"),
+			}),
 		},
 		// stable
 		{
-			keys:   []string{"a", "b", "c"},
-			values: []string{"1", "2", "3", "4"},
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringValue("3"),
+				basetypes.NewStringValue("4"),
+			},
 			startingResult: map[string]string{
 				"a": "1",
 				"b": "3",
 				"c": "2",
 			},
-			endResult: map[string]string{
-				"a": "1",
-				"b": "3",
-				"c": "2",
-			},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"a": basetypes.NewStringValue("1"),
+				"b": basetypes.NewStringValue("3"),
+				"c": basetypes.NewStringValue("2"),
+			}),
 		},
 		{
-			keys:   []string{"a", "b", "c"},
-			values: []string{"1", "2"},
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+			},
 			startingResult: map[string]string{
 				"a": "1",
 				"c": "2",
 			},
-			endResult: map[string]string{
-				"a": "1",
-				"c": "2",
-			},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"a": basetypes.NewStringValue("1"),
+				"c": basetypes.NewStringValue("2"),
+			}),
 		},
 		// stable - addition
 		{
-			keys:   []string{"a", "b", "c", "d"},
-			values: []string{"1", "2", "3", "4"},
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+				basetypes.NewStringValue("d"),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringValue("3"),
+				basetypes.NewStringValue("4"),
+			},
 			startingResult: map[string]string{
 				"a": "1",
 				"b": "3",
 				"c": "2",
 			},
-			endResult: map[string]string{
-				"a": "1",
-				"b": "3",
-				"c": "2",
-				"d": "4",
-			},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"a": basetypes.NewStringValue("1"),
+				"b": basetypes.NewStringValue("3"),
+				"c": basetypes.NewStringValue("2"),
+				"d": basetypes.NewStringValue("4"),
+			}),
 		},
 		// stable - removal
 		{
-			keys:   []string{"b", "c"},
-			values: []string{"1", "2", "3", "4"},
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringValue("3"),
+				basetypes.NewStringValue("4"),
+			},
 			startingResult: map[string]string{
 				"a": "1",
 				"b": "3",
 				"c": "2",
 			},
-			endResult: map[string]string{
-				"b": "3",
-				"c": "2",
-			},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"b": basetypes.NewStringValue("3"),
+				"c": basetypes.NewStringValue("2"),
+			}),
 		},
 		// stable - addition & removal
 		{
-			keys:   []string{"b", "c", "e"},
-			values: []string{"1", "2", "3", "4"},
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+				basetypes.NewStringValue("e"),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringValue("3"),
+				basetypes.NewStringValue("4"),
+			},
 			startingResult: map[string]string{
 				"a": "1",
 				"b": "3",
 				"c": "2",
 			},
-			endResult: map[string]string{
-				"b": "3",
-				"c": "2",
-				"e": "1",
-			},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"b": basetypes.NewStringValue("3"),
+				"c": basetypes.NewStringValue("2"),
+				"e": basetypes.NewStringValue("1"),
+			}),
 		},
 		// stable - addition & removal at max
 		{
-			keys:   []string{"a", "b", "c", "e"},
-			values: []string{"1", "2", "3", "4"},
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+				basetypes.NewStringValue("e"),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringValue("3"),
+				basetypes.NewStringValue("4"),
+			},
 			startingResult: map[string]string{
 				"a": "1",
 				"b": "3",
 				"c": "2",
 				"d": "4",
 			},
-			endResult: map[string]string{
-				"a": "1",
-				"b": "3",
-				"c": "2",
-				"e": "4",
-			},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"a": basetypes.NewStringValue("1"),
+				"b": basetypes.NewStringValue("3"),
+				"c": basetypes.NewStringValue("2"),
+				"e": basetypes.NewStringValue("4"),
+			}),
 		},
 		// stable - addition & removal over max
 		{
-			keys:   []string{"a", "b", "c", "e", "f"},
-			values: []string{"1", "2", "3", "4"},
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+				basetypes.NewStringValue("e"),
+				basetypes.NewStringValue("f"),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringValue("3"),
+				basetypes.NewStringValue("4"),
+			},
 			startingResult: map[string]string{
 				"a": "1",
 				"b": "3",
 				"c": "2",
 				"d": "4",
 			},
-			endResult: map[string]string{
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"a": basetypes.NewStringValue("1"),
+				"b": basetypes.NewStringValue("3"),
+				"c": basetypes.NewStringValue("2"),
+				"e": basetypes.NewStringValue("4"),
+			}),
+		},
+		// Keys and / or Values Known
+		///////////////////////////////////////////////////////////////////////////
+		// empty start
+		{
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringUnknown(),
+				basetypes.NewStringValue("c"),
+				basetypes.NewStringValue("d"),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringValue("3"),
+				basetypes.NewStringValue("4"),
+			},
+			startingResult: map[string]string{},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"a": basetypes.NewStringValue("1"),
+				"b": basetypes.NewStringValue("2"),
+				"c": basetypes.NewStringValue("3"),
+				"d": basetypes.NewStringValue("4"),
+			}),
+		},
+		{
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringUnknown(),
+				basetypes.NewStringValue("4"),
+			},
+			startingResult: map[string]string{},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"a": basetypes.NewStringValue("1"),
+				"b": basetypes.NewStringValue("2"),
+				"c": basetypes.NewStringValue("4"),
+			}),
+		},
+		{
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringUnknown(),
+			},
+			startingResult: map[string]string{},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"a": basetypes.NewStringValue("1"),
+				"b": basetypes.NewStringValue("2"),
+				"c": basetypes.NewStringUnknown(),
+			}),
+		},
+		{
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+				basetypes.NewStringUnknown(),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringUnknown(),
+				basetypes.NewStringValue("4"),
+			},
+			startingResult: map[string]string{},
+			endResult:      basetypes.NewMapUnknown(types.StringType),
+		},
+		// stable
+		{
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringValue("3"),
+				basetypes.NewStringUnknown(),
+			},
+			startingResult: map[string]string{
 				"a": "1",
 				"b": "3",
 				"c": "2",
-				"e": "4",
 			},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"a": basetypes.NewStringValue("1"),
+				"b": basetypes.NewStringValue("3"),
+				"c": basetypes.NewStringValue("2"),
+			}),
+		},
+		{
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringUnknown(),
+				basetypes.NewStringValue("c"),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+			},
+			startingResult: map[string]string{
+				"a": "1",
+				"c": "2",
+			},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"a": basetypes.NewStringValue("1"),
+				"c": basetypes.NewStringValue("2"),
+			}),
+		},
+		// stable - addition
+		{
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+				basetypes.NewStringUnknown(),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringValue("3"),
+				basetypes.NewStringValue("4"),
+			},
+			startingResult: map[string]string{
+				"a": "1",
+				"b": "3",
+				"c": "2",
+			},
+			endResult: basetypes.NewMapUnknown(types.StringType),
+		},
+		{
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+				basetypes.NewStringUnknown(),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringValue("3"),
+			},
+			startingResult: map[string]string{
+				"a": "1",
+				"b": "3",
+				"c": "2",
+			},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"a": basetypes.NewStringValue("1"),
+				"b": basetypes.NewStringValue("3"),
+				"c": basetypes.NewStringValue("2"),
+			}),
+		},
+		{
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+				basetypes.NewStringValue("d"),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringValue("3"),
+				basetypes.NewStringUnknown(),
+			},
+			startingResult: map[string]string{
+				"a": "1",
+				"b": "3",
+				"c": "2",
+			},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"a": basetypes.NewStringValue("1"),
+				"b": basetypes.NewStringValue("3"),
+				"c": basetypes.NewStringValue("2"),
+				"d": basetypes.NewStringUnknown(),
+			}),
+		},
+		{
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("a"),
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringValue("3"),
+				basetypes.NewStringUnknown(),
+			},
+			startingResult: map[string]string{
+				"a": "1",
+				"b": "3",
+				"c": "2",
+			},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"a": basetypes.NewStringValue("1"),
+				"b": basetypes.NewStringValue("3"),
+				"c": basetypes.NewStringValue("2"),
+			}),
+		},
+		// stable - addition & removal
+		{
+			keys: []basetypes.StringValue{
+				basetypes.NewStringValue("b"),
+				basetypes.NewStringValue("c"),
+				basetypes.NewStringValue("e"),
+			},
+			values: []basetypes.StringValue{
+				basetypes.NewStringValue("1"),
+				basetypes.NewStringValue("2"),
+				basetypes.NewStringValue("3"),
+				basetypes.NewStringUnknown(),
+			},
+			startingResult: map[string]string{
+				"a": "1",
+				"b": "3",
+				"c": "2",
+			},
+			endResult: basetypes.NewMapValueMust(types.StringType, map[string]attr.Value{
+				"b": basetypes.NewStringValue("3"),
+				"c": basetypes.NewStringValue("2"),
+				"e": basetypes.NewStringValue("1"),
+			}),
 		},
 	}
 
