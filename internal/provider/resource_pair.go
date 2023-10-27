@@ -6,6 +6,7 @@ package provider
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -13,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var _ resource.ResourceWithModifyPlan = (*PairResource)(nil)
@@ -93,7 +95,7 @@ func (r *PairResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		MarkdownDescription: "Generates a mapping of keys to values that stays stable between applies and makes minimal changes when the set of keys or values changes.",
 		Attributes: map[string]schema.Attribute{
 			"keys": schema.SetAttribute{
-				Description: "The set of keys to assign a value.",
+				Description: "The set of keys to assign a value. An unknown key that can be assigned a value (either known or unknown) will trigger the result to be unknown.",
 				ElementType: types.StringType,
 				Required:    true,
 			},
@@ -113,7 +115,7 @@ func (r *PairResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			},
 			"result": schema.MapAttribute{
 				Computed:    true,
-				Description: "The stable mapping of keys to values, size will be the smaller of the size of keys and values.",
+				Description: "The stable mapping of keys to values, size will be the smaller of the size of keys and values. The value will generally be known at plan time unless an unknown key can be assigned a value in which the whole result will be unknown but the end result will still be stable.",
 				ElementType: types.StringType,
 			},
 		},
@@ -148,13 +150,13 @@ func (r *PairResource) Update(ctx context.Context, req resource.UpdateRequest, r
 }
 
 func (r *PairResource) modify(ctx context.Context, model pairModel, existingResult map[string]string, diagnostics *diag.Diagnostics, state PlanOrState) {
-	keys := make([]string, len(model.Keys.Elements()))
+	keys := make([]basetypes.StringValue, len(model.Keys.Elements()))
 	diagnostics.Append(model.Keys.ElementsAs(ctx, &keys, false)...)
 	if diagnostics.HasError() {
 		return
 	}
 
-	values := make([]string, len(model.Values.Elements()))
+	values := make([]basetypes.StringValue, len(model.Values.Elements()))
 	diagnostics.Append(model.Values.ElementsAs(ctx, &values, false)...)
 	if diagnostics.HasError() {
 		return
@@ -182,17 +184,27 @@ type pairModel struct {
 	Values types.Set    `tfsdk:"values"`
 }
 
-func pairStable(existingResult map[string]string, keys, values []string) map[string]string {
+func pairStable(existingResult map[string]string, keys, values []basetypes.StringValue) basetypes.MapValue {
 	// First up, make a map each of keys and values to allow for easy logic below.
 	keyMapping := make(map[string]bool)
+	keysUnknown := 0
 	valueMapping := make(map[string]bool)
+	valuesUnknown := 0
 
 	for _, key := range keys {
-		keyMapping[key] = true
+		if key.IsUnknown() {
+			keysUnknown += 1
+		} else {
+			keyMapping[key.ValueString()] = true
+		}
 	}
 
 	for _, value := range values {
-		valueMapping[value] = true
+		if value.IsUnknown() {
+			valuesUnknown += 1
+		} else {
+			valueMapping[value.ValueString()] = true
+		}
 	}
 
 	// Given an existing mapping, determine which of those should persist. If a key
@@ -200,7 +212,7 @@ func pairStable(existingResult map[string]string, keys, values []string) map[str
 	// no longer present, a new one needs to be assigned. The latter is easily
 	// achieved by leaving it out of the trimmed mapping and then allowing the
 	// logic below for new keys take care of that.
-	finalMapping := make(map[string]string)
+	finalMapping := make(map[string]attr.Value)
 	valuesUsed := make(map[string]bool)
 
 	for key, value := range existingResult {
@@ -212,26 +224,49 @@ func pairStable(existingResult map[string]string, keys, values []string) map[str
 			continue
 		}
 
-		finalMapping[key] = value
+		finalMapping[key] = basetypes.NewStringValue(value)
 		valuesUsed[value] = true
 	}
 
 	// Next, find new values for new keys (or existing ones who lost their value).
 	for _, key := range keys {
-		if _, ok := finalMapping[key]; ok {
+		if key.IsUnknown() {
+			continue
+		}
+
+		if _, ok := finalMapping[key.ValueString()]; ok {
 			continue
 		}
 
 		for _, value := range values {
-			if _, ok := valuesUsed[value]; ok {
+			if value.IsUnknown() {
 				continue
 			}
 
-			finalMapping[key] = value
-			valuesUsed[value] = true
+			if _, ok := valuesUsed[value.ValueString()]; ok {
+				continue
+			}
+
+			finalMapping[key.ValueString()] = value
+			valuesUsed[value.ValueString()] = true
 			break
+		}
+
+		if valuesUnknown > 0 {
+			if _, ok := finalMapping[key.ValueString()]; !ok {
+				finalMapping[key.ValueString()] = basetypes.NewStringUnknown()
+				valuesUnknown -= 1
+				continue
+			}
 		}
 	}
 
-	return finalMapping
+	// If at the end of all of this, we have some unknown keys that would map to
+	// some unknown values, we sadly have to return an entirely unknown result due
+	// the requirement that maps have string values.
+	if keysUnknown > 0 && (valuesUnknown > 0 || (len(valueMapping)-len(valuesUsed) > 0)) {
+		return basetypes.NewMapUnknown(types.StringType)
+	}
+
+	return basetypes.NewMapValueMust(types.StringType, finalMapping)
 }
