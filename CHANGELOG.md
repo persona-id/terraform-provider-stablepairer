@@ -1,4 +1,4 @@
-## Unreleased
+## 1.1.1
 
 * [#4](https://github.com/persona-id/terraform-provider-stablepairer/pull/4)
   Fix ModifyPlan handling of unknown values.
