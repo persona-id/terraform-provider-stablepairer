@@ -25,7 +25,7 @@ resource "stablepairer_pair" "example" {
 ### Required
 
 - `keys` (Set of String) The set of keys to assign a value. An unknown key that can be assigned a value (either known or unknown) will trigger the result to be unknown.
-- `values` (Set of String) The set of values to assing to keys.
+- `values` (Set of String) The set of values to assign to keys.
 
 ### Read-Only
 
