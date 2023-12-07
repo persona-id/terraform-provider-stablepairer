@@ -100,7 +100,7 @@ func (r *PairResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Required:    true,
 			},
 			"values": schema.SetAttribute{
-				Description: "The set of values to assing to keys.",
+				Description: "The set of values to assign to keys.",
 				ElementType: types.StringType,
 				Required:    true,
 			},

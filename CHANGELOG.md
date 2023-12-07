@@ -1,3 +1,9 @@
+## Unreleased
+
+* [#8](https://github.com/persona-id/terraform-provider-stablepairer/pull/8)
+  Fix typo in field description.
+  ([@drcapulet])
+
 ## 1.1.1
 
 * [#4](https://github.com/persona-id/terraform-provider-stablepairer/pull/4)
