@@ -1,4 +1,4 @@
-## Unreleased
+## 1.1.2
 
 * [#8](https://github.com/persona-id/terraform-provider-stablepairer/pull/8)
   Fix typo in field description.
