@@ -1,8 +1,6 @@
 module github.com/persona-id/terraform-provider-stablepairer
 
-go 1.23.0
-
-toolchain go1.23.6
+go 1.26
 
 require (
 	github.com/hashicorp/terraform-plugin-framework v1.15.0
