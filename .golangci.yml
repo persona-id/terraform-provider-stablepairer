@@ -14,6 +14,7 @@ linters:
   default: none
   enable:
     - copyloopvar
+    - depguard
     - durationcheck
     - errcheck
     - forcetypeassert
@@ -28,6 +29,7 @@ linters:
     - unconvert
     - unparam
     - unused
+    - usetesting
   exclusions:
     generated: lax
     paths:
@@ -39,4 +41,18 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
+  settings:
+    depguard:
+      rules:
+        main:
+          deny:
+            - pkg: "github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest" # prefix
+              desc: "Use github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+            - pkg: "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource" # prefix
+              desc: "Use github.com/hashicorp/terraform-plugin-testing/helper/resource"
+            - pkg: "github.com/hashicorp/terraform-plugin-sdk/v2/terraform" # prefix
+              desc: "Use github.com/hashicorp/terraform-plugin-testing/terraform"
+            - pkg: "github.com/hashicorp/terraform-plugin-sdk/v2" # prefix
+              desc: "Use Terraform Plugin Framework"
+          list-mode: lax # a package is allowed if it doesn't match the deny list or the allow rule is more specific (longer) than the deny rule.
 version: "2"
