@@ -2,5 +2,15 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "postUpdateOptions": ["gomodTidy"],
+  "packageRules": [
+    {
+      "description": "Enable indirect (transitive) Go module updates, off by default in Renovate",
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["indirect"],
+      "minimumReleaseAge": "7 days",
+      "enabled": true
+    }
   ]
 }
