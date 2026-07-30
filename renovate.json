@@ -11,6 +11,23 @@
       "matchDepTypes": ["indirect"],
       "minimumReleaseAge": "7 days",
       "enabled": true
+    },
+    {
+      "description": "Low-risk: Go module minor and patch",
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "minimumReleaseAge": "7 days",
+      "addLabels": ["automerge"],
+      "automerge": true,
+      "platformAutomerge": true
+    },
+    {
+      "description": "Low-risk: GitHub Actions minor and patch",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "addLabels": ["automerge"],
+      "automerge": true,
+      "platformAutomerge": true
     }
   ]
 }
