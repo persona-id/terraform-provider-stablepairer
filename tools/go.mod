@@ -18,7 +18,7 @@ require (
 	github.com/bgentry/speakeasy v0.2.0 // indirect
 	github.com/bmatcuk/doublestar/v4 v4.10.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
-	github.com/cloudflare/circl v1.6.4 // indirect
+	github.com/cloudflare/circl v1.6.5 // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/go-git/go-git/v5 v5.19.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
