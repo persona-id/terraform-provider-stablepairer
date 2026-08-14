@@ -43,7 +43,7 @@ require (
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/yuin/goldmark v1.8.5 // indirect
-	github.com/yuin/goldmark-meta v1.1.0 // indirect
+	github.com/yuin/goldmark-meta/v2 v2.0.0 // indirect
 	github.com/zclconf/go-cty v1.19.0 // indirect
 	go.abhg.dev/goldmark/frontmatter v0.3.0 // indirect
 	golang.org/x/crypto v0.54.0 // indirect
